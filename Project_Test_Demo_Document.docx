@@ -1,0 +1,122 @@
+# Automated Testing and Reporting Demo
+## Groovy/Spring Boot/Spock Project
+
+---
+
+## 1. Project Setup
+
+**Description:**
+- Initialized a Groovy/Spring Boot project with Gradle.
+- Added Spock and Groovy dependencies for testing.
+
+**Screenshot:**
+[Insert screenshot of `build.gradle` showing dependencies for Spock, Groovy, and Spring Boot.]
+
+---
+
+## 2. Service Implementation
+
+**Description:**
+- Implemented `LoanApplicationService` with methods:
+  - `fetchProductBasedInterestRateCode`
+  - `checkAssessmentYear`
+
+**Screenshot:**
+[Insert code snippet screenshot of `LoanApplicationService.groovy` showing both methods.]
+
+---
+
+## 3. Writing and Merging Test Cases
+
+**Description:**
+- Created Spock test specifications for both methods.
+- Merged duplicate test files into a single comprehensive spec.
+- Ensured tests cover all edge cases and scenarios.
+
+**Screenshot:**
+[Insert screenshot of the test directory structure and a snippet from `LoanApplicationServiceSpec.groovy`.]
+
+---
+
+## 4. Test Scenarios Covered
+
+**Description:**
+- **fetchProductBasedInterestRateCode:**
+  - Empty allowed list
+  - No matches
+  - Some matches
+  - Both lists empty
+- **checkAssessmentYear:**
+  - Valid year in both JSON structures
+  - No valid year
+  - Malformed JSON
+  - Cutoff date logic (future/past)
+  - Multiple entries
+
+**Screenshot:**
+[Insert screenshot of the custom HTML report table or a summary table of test methods and scenarios.]
+
+---
+
+## 5. Running Tests
+
+**Description:**
+- Used `./gradlew test` to run all test cases.
+- Ensured all tests pass after each code or test update.
+
+**Screenshot:**
+[Insert terminal output screenshot showing a successful test run.]
+
+---
+
+## 6. Generating and Viewing Reports
+
+**Description:**
+- Used Gradle's built-in HTML reports for detailed results.
+- Generated a custom HTML summary report for management/demo purposes.
+- Opened reports in Google Chrome for review.
+
+**Screenshot:**
+[Insert screenshot of the custom HTML report (`ProjectTestSummary.html`) open in Chrome.]
+
+---
+
+## 7. Troubleshooting and Iteration
+
+**Description:**
+- Diagnosed and fixed issues such as:
+  - Missing imports
+  - Groovy scoping and GString interpolation
+  - Date and string format mismatches
+  - Duplicate test files
+- Iteratively updated code and tests to ensure alignment and full coverage.
+
+**Screenshot:**
+[Insert screenshot of a failed test output and the corresponding fix in code or test.]
+
+---
+
+## 8. Final Results
+
+**Description:**
+- All test cases passed.
+- Full coverage of business logic and edge cases.
+- Automated, repeatable process for future development and QA.
+
+**Screenshot:**
+[Insert screenshot of the final test summary (custom HTML report or Gradle report with all green/passed).]
+
+---
+
+## 9. Key Takeaways
+
+- Automated testing ensures code quality and reliability.
+- Spock and Groovy provide expressive, powerful test syntax.
+- Custom and default reports make it easy to communicate results to stakeholders.
+- Iterative development and testing catch issues early and improve maintainability.
+
+---
+
+**Instructions:**
+- Replace each [Insert screenshot...] with your actual screenshots.
+- You can use the "Insert > Picture" feature in Word/Google Docs or paste images directly. 
