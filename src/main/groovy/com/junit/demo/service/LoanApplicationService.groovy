@@ -9,20 +9,6 @@ import java.time.Year
 
 @Service
 class LoanApplicationService {
-    List<ROIStructureVO> fetchProductBasedInterestRateCode(List<String> allowedInterestRateCodeUuidList, List<ROIStructureVO> roiStructureVOS) {
-        List<ROIStructureVO> productBasedROIStructureVOList = []
-        if (allowedInterestRateCodeUuidList && roiStructureVOS) {
-            for (String interestRateCodeUuid : allowedInterestRateCodeUuidList) {
-                for (ROIStructureVO roiStructureVO : roiStructureVOS) {
-                    if (interestRateCodeUuid.equals(roiStructureVO.getUuid())) {
-                        productBasedROIStructureVOList.add(roiStructureVO)
-                    }
-                }
-            }
-        }
-        return productBasedROIStructureVOList
-    }
-
     boolean checkAssessmentYear(Long tenantId, String itrJson, String itrCutOffDateStr) {
         Date currentDate = new Date()
         int currentYear = Year.now().getValue()
