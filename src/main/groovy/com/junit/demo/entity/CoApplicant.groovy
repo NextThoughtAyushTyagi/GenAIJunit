@@ -1,10 +1,6 @@
 package com.junit.demo.entity
 
 import lombok.Data
-import org.hibernate.annotations.Type
-import org.springframework.data.annotation.CreatedDate
-import org.springframework.data.annotation.LastModifiedDate
-import org.springframework.data.jpa.domain.support.AuditingEntityListener
 
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -14,9 +10,7 @@ class CoApplicant implements Serializable {
 
     Long id
     Long tenantId
-    @CreatedDate
     Date dateCreated
-    @LastModifiedDate
     Date lastUpdated
     String uuid = UUID.randomUUID()
     String firstName

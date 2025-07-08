@@ -1,31 +1,15 @@
 package com.junit.demo.entity
 
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.SequenceGenerator
-import jakarta.persistence.Table
-import jakarta.persistence.Version
 import lombok.Data
-import org.springframework.data.annotation.CreatedDate
-import org.springframework.data.annotation.LastModifiedDate
 
 
-@Entity
-@Table(name = "loan_purpose")
 @Data
 public class LoanPurpose implements Serializable {
-    static auditable = [ignore: ['version', 'dateCreated', 'uuid', 'loanSubPurpose', 'loanPurposeDocumentCategories']]
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LOAN_PURPOSE")
-    @SequenceGenerator(name = "SEQ_LOAN_PURPOSE", sequenceName = "SEQ_LOAN_PURPOSE", allocationSize = 1)
+
     Long id
     private static final long serialVersionUID = 2L
 
-    @CreatedDate
     Date dateCreated
-    @LastModifiedDate
     Date lastUpdated
     //TODO : To be deleted, don't use it anywhere, instead use "repaymentTypesAllowed" var
     String description
@@ -145,7 +129,6 @@ public class LoanPurpose implements Serializable {
     Boolean fetchProgramPageSort = false
 
     Boolean fetchProgramTabSort = false
-    @Version
     Long version
     String eSignCharges
     Boolean maxEligibleAmountValidationFromBre = false

@@ -1,54 +1,26 @@
 package com.junit.demo.entity
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.EntityListeners
-import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.SequenceGenerator
-import jakarta.persistence.Table
-import jakarta.persistence.Version
+
 import lombok.Data
-import org.hibernate.annotations.NotFound
-import org.hibernate.annotations.NotFoundAction
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.data.annotation.CreatedDate
-import org.springframework.data.annotation.LastModifiedDate
-import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import org.springframework.web.multipart.MultipartFile
 
-@Entity
-@Table(name = "SUPPORTING_DOCUMENT")
 @Data
 class SupportingDocument implements Serializable {
 
 
     private static final long serialVersionUID = 2L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SUPPORTING_DOCUMENT")
-    @SequenceGenerator(name = "SEQ_SUPPORTING_DOCUMENT", sequenceName = "SEQ_SUPPORTING_DOCUMENT", allocationSize = 1)
     Long id
     Long tenantId
-    @CreatedDate
     Date dateCreated
-    @LastModifiedDate
     Date lastUpdated
     String uuid = UUID.randomUUID()
     String name
     String note
     String path
-    @Column(name = "passcode")
     String password
     String contentType
     String mediumImagePath
     String originalImagePath
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "LOAN_APPLICATION_ID", referencedColumnName = "ID")
     LoanApplication loanApplication
     Boolean visibleToDSA
     Boolean visibleToBorrower
@@ -77,7 +49,6 @@ class SupportingDocument implements Serializable {
     String groupMemberDetailsUuid
     String dmsDocumentIndex
     String perfiosErrorResponse
-    @Version
     Long version
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "LOAN_DISBURSEMENT_ID", referencedColumnName = "id")
