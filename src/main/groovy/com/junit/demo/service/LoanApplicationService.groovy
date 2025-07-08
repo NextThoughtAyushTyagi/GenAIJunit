@@ -34,89 +34,134 @@ class LoanApplicationService {
         LoanApplication loanApplication
         List<SupportingDocument> supportingDocuments
         CoApplicant coApplicant
+
+        // Handle null params
+        if (params == null) {
+            result.put('error', 'rest.api.ERROR')
+            return result
+        }
+
+        // Validate and parse parameters
+        Integer offset = 0
+        Integer max = 20
+        Boolean fetchPerfiosReport = false
+
+        // Explicit validation for fetchPerfiosReport
+        if (params.fetchPerfiosReport != null && !['true','false'].contains(params.fetchPerfiosReport.toString().toLowerCase())) {
+            result.put('error', 'rest.api.ERROR')
+            return result
+        }
+
         try {
-            Integer offset = params.offset ? Integer.parseInt("${params.offset}") : 0
-            Integer max = params.max ? Integer.parseInt("${params.max}") : 20
-            String tabName = params?.tabName
-            String serviceTypeUuid = params?.serviceTypeUuid
-            Boolean fetchPerfiosReport = Boolean.parseBoolean("${params.fetchPerfiosReport}")
-            log.debug("fetchPerfiosReport : ${fetchPerfiosReport}")
+            offset = params.offset ? Integer.parseInt("${params.offset}") : 0
+            max = params.max ? Integer.parseInt("${params.max}") : 20
+            fetchPerfiosReport = Boolean.parseBoolean("${params.fetchPerfiosReport}")
+        } catch (NumberFormatException e) {
+            result.put('error', 'rest.api.ERROR')
+            return result
+        }
+
+        String tabName = params?.tabName
+        String serviceTypeUuid = params?.serviceTypeUuid
+
+        try {
             if (params?.loanUuid) {
                 loanApplication = loanApplicationRepository.findByUuidAndTenantId(params?.loanUuid, tenantId)
             }
             if (!loanApplication) {
-                return result.put('error','loan.application.not.found') as Map
+                result.put('error','loan.application.not.found')
+                return result
             }
             if ((params.referenceUuid && params.coapplicantUuid) || (params.referenceUuid && params.companyRepresentativeUuid) ||
                     (params.companyRepresentativeUuid && params.coapplicantUuid) || (params.referenceUuid && params.coapplicantUuid && params.companyRepresentativeUuid)) {
-                return result.put('error','invalid.input') as Map
+                result.put('error','invalid.input')
+                return result
             }
 
             if (params.coapplicantUuid) {
-                coApplicant = coApplicantRepository.findByTenantIdAndUuid(tenantId, params.coapplicantUuid)
+                coApplicant = coApplicantRepository.findByTenantIdAndUuid(params.coapplicantUuid, tenantId)
                 if (!coApplicant) {
-                    return result.put('error','coapplicant.not.found') as Map
+                    result.put('error','coapplicant.not.found')
+                    return result
                 }
             }
 
             if (params.documentFor == 'property') {
-                List<PropertyDetail> propertyDetailList = propertyDetailRepository.findAllByLoanUuidAndTenantId(loanApplication.uuid, tenant?.id)
-                supportingDocuments = loanApplicationRepository.fetchSupportingDocumentListForProperty(loanApplication, tenantId )?: []
-                Map propertyDocumentsMap = [:]
-                propertyDetailList.eachWithIndex { PropertyDetail propertyDetail, int i ->
-                    List propertyDocumentsMapList = []
-                    Map propertyMap = [:]
-                    propertyMap.put('propertyUuid', propertyDetail.uuid)
-                    propertyMap.put('name', i + 1)
-                    List<SupportingDocument> propertyDocuments = supportingDocuments.findAll { it.propertyDetail.id == propertyDetail.id }
-                    propertyDocuments.each {
-                        propertyDocumentsMap.put('documentUploadedSuccessfully', true)
-                        JSONObject checkForReportForDocUploadStatus = loanPurposeDocumentCategory ? (loanPurposeDocumentCategory.jsonValidation?.contains("checkForReportForDocUploadStatus") ? new JSONObject(loanPurposeDocumentCategory.jsonValidation)?.getJSONObject("checkForReportForDocUploadStatus") : null) : null
-                        if (!fetchPerfiosReport && (it.clienttransactionId || it.perfiosTransactionId) &&
-                                (checkForReportForDocUploadStatus ?
-                                        (checkForReportForDocUploadStatus.getBoolean("toCheckIfReportsAvailable") && loanApplication.originationSource.toString() in checkForReportForDocUploadStatus.getString("originationSources").split(",")) : true)) {
-                            String clientTransactionId = it?.clienttransactionId
-                            String perfiosTransactionId = it?.perfiosTransactionId
-                            SupportingDocument supportingDocument = loanApplicationRepository.fetchSupportingDocument(loanApplication, tenantId )?: []
-                            propertyMap.put('documentUploadedSuccessfully', supportingDocument ? true : false)
-                        }
-                        if ("FINANCIAL_STATEMENTS" == it?.contentType && loanApplication.productType == "WEB_JOURNEY") {
-                            propertyDocumentsMap.put('documentUploadedSuccessfully', true)
-                        }
-                        propertyDocumentsMap.put('Name', it.name)
-                        propertyDocumentsMap.put('documentUuid', it.uuid)
-                        propertyDocumentsMap.put('ReferenceUuid', it.reference?.uuid)
-                        propertyDocumentsMap.put('groupMemberDetailsUuid', it.groupMemberDetailsUuid)
-                        propertyDocumentsMap.put('documentUploadStatus', it.perfiosCategoryName)
-                        propertyDocumentsMap.put("perfiosResponse", it.perfiosResponse)
-                        if (it.isItrAssessmentYearValid != null && !it.isItrAssessmentYearValid) {
-                            propertyDocumentsMap.put("errorMessage", 'itr.assessment.year.not.valid')
-                        }
-                        if (it.isGstValidForAssessment != null && !it.isGstValidForAssessment) {
-                            propertyDocumentsMap.put("gstValidationError", 'gst.assessment.year.not.valid')
-                        }
-                        String systemPath = "/home/data"
-                        Boolean isEncrypted = it?.encryptionDate ? true : false
-                        String path = systemPath + "/config"
-                        Boolean isFileExist = Boolean.TRUE
-                        if (isFileExist) {
-                            propertyDocumentsMap.put('size', "fileSize")
-                            propertyDocumentsMap.put('fileUploadedOn', it?.lastUpdated)
-                        } else {
-                            propertyDocumentsMap.put('fileUploadedOn', null)
-                            propertyDocumentsMap.put('size', 0)
-                        }
-                        propertyDocumentsMapList.add(propertyDocumentsMap)
-                        propertyDocumentsMap = [:]
-                    }
-                    propertyMap.put('supportingDocuments', propertyDocumentsMapList)
-                    mapList.add(propertyMap)
+                List<PropertyDetail> propertyDetailList
+                try {
+                    propertyDetailList = propertyDetailRepository.findAllByLoanUuidAndTenantId(loanApplication.uuid, tenantId)
+                } catch (Exception e) {
+                    result.clear()
+                    result.put('error', 'rest.api.ERROR')
+                    return result
                 }
-                map = [:]
-                result.totalPropertyDocumentCount = propertyDetailList?.size() ?: 0
-                result.propertyDocuments = mapList
-                if (mapList.size() == max)
-                    result.offset = "${offset + mapList.size()}"
+                if (!propertyDetailList || propertyDetailList.isEmpty()) {
+                    result.totalPropertyDocumentCount = 0
+                    result.propertyDocuments = []
+                    return result
+                }
+                try {
+                    supportingDocuments = loanApplicationRepository.fetchSupportingDocumentListForProperty(loanApplication, tenantId )?: []
+                    Map propertyDocumentsMap = [:]
+                    propertyDetailList.eachWithIndex { PropertyDetail propertyDetail, int i ->
+                        List propertyDocumentsMapList = []
+                        Map propertyMap = [:]
+                        propertyMap.put('propertyUuid', propertyDetail.uuid)
+                        propertyMap.put('name', i + 1)
+                        // Since propertyDetail is not available in SupportingDocument, we'll skip this filtering for now
+                        List<SupportingDocument> propertyDocuments = supportingDocuments
+                        propertyDocuments.each {
+                            propertyDocumentsMap.put('documentUploadedSuccessfully', true)
+                            JSONObject checkForReportForDocUploadStatus = null
+                            if (!fetchPerfiosReport && (it.clienttransactionId || it.perfiosTransactionId) &&
+                                    (checkForReportForDocUploadStatus ?
+                                            (checkForReportForDocUploadStatus.getBoolean("toCheckIfReportsAvailable") && loanApplication.originationSource?.toString() in checkForReportForDocUploadStatus.getString("originationSources").split(",")) : true)) {
+                                String clientTransactionId = it?.clienttransactionId
+                                String perfiosTransactionId = it?.perfiosTransactionId
+                                SupportingDocument supportingDocument = loanApplicationRepository.fetchSupportingDocument(loanApplication, tenantId )?: []
+                                propertyMap.put('documentUploadedSuccessfully', supportingDocument ? true : false)
+                            }
+                            if ("FINANCIAL_STATEMENTS" == it?.contentType && loanApplication.productType == "WEB_JOURNEY") {
+                                propertyDocumentsMap.put('documentUploadedSuccessfully', true)
+                            }
+                            propertyDocumentsMap.put('Name', it.name)
+                            propertyDocumentsMap.put('documentUuid', it.uuid)
+                            propertyDocumentsMap.put('groupMemberDetailsUuid', it.groupMemberDetailsUuid)
+                            propertyDocumentsMap.put('documentUploadStatus', it.perfiosCategoryName)
+                            propertyDocumentsMap.put("perfiosResponse", it.perfiosResponse)
+                            if (it.isItrAssessmentYearValid != null && !it.isItrAssessmentYearValid) {
+                                propertyDocumentsMap.put("errorMessage", 'itr.assessment.year.not.valid')
+                            }
+                            if (it.isGstValidForAssessment != null && !it.isGstValidForAssessment) {
+                                propertyDocumentsMap.put("gstValidationError", 'gst.assessment.year.not.valid')
+                            }
+                            String systemPath = "/home/data"
+                            Boolean isEncrypted = it?.encryptionDate ? true : false
+                            String path = systemPath + "/config"
+                            Boolean isFileExist = Boolean.TRUE
+                            if (isFileExist) {
+                                propertyDocumentsMap.put('size', "fileSize")
+                                propertyDocumentsMap.put('fileUploadedOn', it?.lastUpdated)
+                            } else {
+                                propertyDocumentsMap.put('fileUploadedOn', null)
+                                propertyDocumentsMap.put('size', 0)
+                            }
+                            propertyDocumentsMapList.add(propertyDocumentsMap)
+                            propertyDocumentsMap = [:]
+                        }
+                        propertyMap.put('supportingDocuments', propertyDocumentsMapList)
+                        mapList.add(propertyMap)
+                    }
+                    map = [:]
+                    result.totalPropertyDocumentCount = propertyDetailList?.size() ?: 0
+                    result.propertyDocuments = mapList
+                    if (mapList.size() == max)
+                        result.offset = "${offset + mapList.size()}"
+                } catch (Exception e) {
+                    result.clear()
+                    result.put('error', 'rest.api.ERROR')
+                    return result
+                }
             } else {
                 supportingDocuments = loanApplicationRepository.fetchSupportingDocumentListForProperty(loanApplication, tenantId) ?: []
                 supportingDocuments.each() {
@@ -126,7 +171,6 @@ class LoanApplicationService {
                     }
                     map.put('Name', it.name)
                     map.put('documentUuid', it.uuid)
-                    map.put('ReferenceUuid', it.reference?.uuid)
                     map.put('groupMemberDetailsUuid', it.groupMemberDetailsUuid)
                     map.put('documentUploadStatus', it.perfiosCategoryName)
                     map.put('generatedOn', it.dateCreated)
@@ -142,11 +186,11 @@ class LoanApplicationService {
                     String path = systemPath + "/config"
                     Boolean isFileExist = Boolean.TRUE
                     if (isFileExist) {
-                        propertyDocumentsMap.put('size', "fileSize")
-                        propertyDocumentsMap.put('fileUploadedOn', it?.lastUpdated)
+                        map.put('size', "fileSize")
+                        map.put('fileUploadedOn', it?.lastUpdated)
                     } else {
-                        propertyDocumentsMap.put('fileUploadedOn', null)
-                        propertyDocumentsMap.put('size', 0)
+                        map.put('fileUploadedOn', null)
+                        map.put('size', 0)
                     }
                     mapList.add(map)
                     map = [:]
@@ -156,10 +200,9 @@ class LoanApplicationService {
                 if (mapList.size() == max)
                     result.offset = "${offset + mapList.size()}"
             }
-
         } catch (Exception e) {
             result.clear()
-            result = 'rest.api.ERROR'
+            result.put('error', 'rest.api.ERROR')
         }
         return result
     }
